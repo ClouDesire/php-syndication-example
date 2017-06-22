@@ -23,30 +23,30 @@ class CloudesireAPIClient {
     }
     
     //Open CURL connection
-    private function CURLConnection($url, $curl_options) {
+    private function CURLConnection($url, $curlOptions) {
         $ch = curl_init();
         
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
         
-        if (is_array($curl_options) && count($curl_options)) {
-            foreach($curl_options as $opt_name => $opt_value) {
-                curl_setopt($ch, $opt_name, $opt_value);
+        if (is_array($curlOptions) && count($curlOptions)) {
+            foreach($curlOptions as $optName => $optValue) {
+                curl_setopt($ch, $optName, $optValue);
             }
         }
         
-        $result = curl_exec($ch);
+        $response = curl_exec($ch);
         
-        $curl_error = curl_error($ch);
+        $curlErrorString = curl_error($ch);
         
         curl_close($ch); 
         
-        $error = ($curl_error != '' || $result === false);
+        $error = ($curlErrorString != '' || $response === false);
         
         return array(
-            'curl_error_string' => $curl_error,
+            'curl_error_string' => $curlErrorString,
             'error' => $error,
-            'result' => $result
+            'response' => $response
         );
     }
     
