@@ -37,9 +37,9 @@ if (is_array($event)) {
 
             //invoke the Cloudesire API in order to retrieve the subscription details
             //subscription data will be returned as object
-            $subscription_data = $apiClient->GetSubscription($entityURL);
+            $subscription = $apiClient->GetSubscription($entityURL);
                 
-            if (is_object($subscription_data)) {
+            if (is_object($subscription)) {
 		
                 $paid = $subscription->paid;
                 $status = $subscription->deploymentStatus;
