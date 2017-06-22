@@ -1,6 +1,6 @@
 <?php
 //Cloudesire API client to be used
-require 'APIclient.php';
+require 'APIClient.php';
 
 //Cloudesire API endpoint
 
@@ -33,7 +33,7 @@ if (is_array($event)) {
         if ($entity == 'Subscription' && ($type == 'MODIFIED' || $type == 'CREATED')) {
             
             //instantiate the Cloudesire API Client
-            $apiClient = new CloudesireAPIclient(API_BASE_URL, API_USERNAME, API_PASSWORD);
+            $apiClient = new CloudesireAPIClient(API_BASE_URL, API_USERNAME, API_PASSWORD);
 
             //invoke the Cloudesire API in order to retrieve the subscription details
             //subscription data will be returned as object
@@ -55,6 +55,7 @@ if (is_array($event)) {
 
                     //calls Cloudesire API in order to set the Subscription to 'undeployed'
                     $responseUndeployed = $apiClient->UpdateSubsctiptionStatus($entityURL, 'UNDEPLOYED');
+                    //here you should manage exceptions, checking if $responseUndeployed is not false...
 
                 }
 
@@ -66,17 +67,16 @@ if (is_array($event)) {
                     here you should retrieve the customer data and create his tenant in your database
                     */
 
-                    //calls Cloudesire API in order to provide endpoints
-
                     //endpoints need to be provided in this way
                     $endpoints[] = array(
                         'endpoint' => 'https://www.yourapp.com/login', //please provide your app endpoint URL here
                         'description' => 'Login Page',
                         'category'=> 'APP'
                     );
-
+                    
+                    //calls Cloudesire API in order to provide endpoints
                     $responseEndpoints = $apiClient->SetSubsctiptionEndpoints($entityURL, $endpoints);
-                    //here you should manage exceptions, checking $responseEndpoints...
+                    //here you should manage exceptions, checking if $responseEndpoints is not false...
 
 
                     //instructions need to be provided in this way
@@ -86,12 +86,12 @@ if (is_array($event)) {
                     );
                     //calls Cloudesire API in order to provide instructions
                     $responseInstructions = $apiClient->SetSubsctiptionInstructions($entityURL, $instructions);
-                    //here you should manage exceptions, checking $responseInstructions...
+                    //here you should manage exceptions, checking if $responseInstructions is not false...
 
 
                     //calls Cloudesire API in order to provide set the Subscription to 'deployed'
                     $responseDeployed = $apiClient->UpdateSubsctiptionStatus($entityURL, 'DEPLOYED');
-                    //here you should manage exceptions, checking $responseDeployed...
+                    //here you should manage exceptions, checking if $responseDeployed is not false...
 
                 }
                     

@@ -1,22 +1,29 @@
 <?php
 
-class CloudesireAPIclient {
-    private $_token;
-    private $_baseUrl;
-    private $_username;
-    private $_password;
+class CloudesireAPIClient {
+    private $token;
+    private $baseUrl;
+    private $username;
+    private $password;
     
     //client constructor
     function __construct($baseUrl, $username, $password) {
         
-        $this->_baseUrl  = $baseUrl;
-        $this->_username = $username;
-        $this->_password = $password;
-        $this->_token    = $this->APILogin();
+        if ($baseUrl && $username && $password) {
+            $this->baseUrl  = $baseUrl;
+            $this->username = $username;
+            $this->password = $password;
+        } else throw new Exception('baseurl, username, password cannot be empty');
+        
+        $token = $this->APILogin();
+        
+        if (!$token)
+            throw new Exception('invalid API credentials');
+        else $this->token = $token;
     }
     
     //Open CURL connection
-    private function CURLconnection($url, $curl_options) {
+    private function CURLConnection($url, $curl_options) {
         $ch = curl_init();
         
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -29,21 +36,29 @@ class CloudesireAPIclient {
         }
         
         $result = curl_exec($ch);
-
+        
+        $curl_error = curl_error($ch);
+        
         curl_close($ch); 
         
-        return $result;
+        $error = ($curl_error != '' || $result === false);
+        
+        return array(
+            'curl_error_string' => $curl_error,
+            'error' => $error,
+            'result' => $result
+        );
     }
     
     //builds the CURL headers array
-    private function CURLheaders($isJson) {
+    private function CURLHeaders($isJson) {
         $headers = array();
         
         if ($isJson)
             $headers[] = 'Content-Type: application/json';
         
-        $headers[] = 'CMW-Auth-Token: ' . $this->_token;
-        $headers[] = 'CMW-Auth-User: '. $this->_username;
+        $headers[] = 'CMW-Auth-Token: ' . $this->token;
+        $headers[] = 'CMW-Auth-User: '. $this->username;
         
         return $headers;
     }
@@ -55,10 +70,10 @@ class CloudesireAPIclient {
         $curl_options = array(
             CURLOPT_CUSTOMREQUEST => $mode,
             CURLOPT_POSTFIELDS  => json_encode($data),
-            CURLOPT_HTTPHEADER  => $this->CURLheaders(true)
+            CURLOPT_HTTPHEADER  => $this->CURLHeaders(true)
         );
         
-        return $this->CURLconnection($url, $curl_options);
+        return $this->CURLConnection($url, $curl_options);
     }
     
     //POST data via CURL
@@ -71,79 +86,64 @@ class CloudesireAPIclient {
         return $this->PostOrPatchData($url, $data, 'PATCH');
     }
     
+    //chacks CURL results and builds responses
+    private function Response($curlResponse) {
+        if (!$curlResponse['error']) {
+           $response = $curlResponse['response'];
+           return json_decode($response);
+        } else return false; 
+    }
+    
     //API authentication
     private function APILogin() {
+        $url = $this->baseUrl . '/login?expire=false';
         
-        $url = $this->_baseUrl . '/login?expire=false';
-        
-        $authString = $this->_username . ":" . $this->_password;
+        $authString = $this->username . ":" . $this->password;
         
         $curl_options = array(
             CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
             CURLOPT_USERPWD  => $authString
         );
         
-        $result = $this->CURLconnection($url, $curl_options);
-
-        if ($result) {
-            return json_decode($result);
-        } else return false;
-    }
-
+        return $this->Response($this->CURLConnection($url, $curl_options));
+     }
+    
+    
     //provides subcription's instructions
     public function SetSubsctiptionInstructions($entityUrl, $instructions) {
+        $url = $this->baseUrl . $entityUrl . "/instructions";
         
-        if (!$this->_token) {
-            return false;
-        }
-
-        $url = $this->_baseUrl . $entityUrl . "/instructions";
-        
-        return $this->PostData($url, $instructions);
+        return $this->Response($this->PostData($url, $instructions));
     }
 
     //provides subcription's endpoints
     public function SetSubsctiptionEndpoints($entityUrl, $endpoints) {
+        $url = $this->baseUrl . $entityUrl . "/endpoints";
         
-        if (!$this->_token) {
-            return false;
-        }
-
-        $url = $this->_baseUrl . $entityUrl . "/endpoints";
-        
-        return $this->PostData($url, $endpoints);
+        return $this->Response($this->PostData($url, $endpoints));
     }
 
     //sets subcription 'deploymentStatus' to DEPLOYED or UNDEPLOYED
     public function UpdateSubsctiptionStatus($entityUrl, $status) {
-        
-        if (!$this->_token) {
-            return false;
-        }
-
         $newStatus = array(
            'deploymentStatus' => $status
         );
 
-        $url = $this->_baseUrl . $entityUrl;
+        $url = $this->baseUrl . $entityUrl;
         
-        return $this->PatchData($url, $newStatus);
+        return $this->Response($this->PatchData($url, $newStatus));
     }
 
     //gets subscription details
     public function GetSubscription($entityUrl)
     {
-        if (!$this->_token) {
-            return false;
-        }
-        
-        $url = $this->_baseUrl . $entityUrl;
+        $url = $this->baseUrl . $entityUrl;
         
         $curl_options = array(
-            CURLOPT_HTTPHEADER  => $this->CURLheaders(false)
+            CURLOPT_HTTPHEADER  => $this->CURLHeaders(false)
         );
         
-        return json_decode($this->CURLconnection($url, $curl_options));
+        return $this->Response($this->CURLConnection($url, $curl_options));
     }
 }
 
