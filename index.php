@@ -96,7 +96,7 @@ if (is_array($event)) {
                 }
                     
             } else {
-              header('HTTP/ 433 no subscription data received');
+              header('HTTP/1.1 400 no subscription data received');
               exit();
             }  
         } else {
@@ -104,12 +104,12 @@ if (is_array($event)) {
         }
     }
     else {
-        header('HTTP/ 433 identifier missing');
+        header('HTTP/1.1 400 identifier missing');
         exit();
     }
     
     //default answer
-    header('HTTP/1.1 204 - No content');
+    header('HTTP/1.1 204 No content');
     
 }
 
